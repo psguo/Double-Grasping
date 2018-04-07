@@ -89,11 +89,37 @@ class RoboHandler:
         self.graspindices = self.gmodel.graspindices
         self.grasps = self.gmodel.grasps
 
+    def filter_grasp(self, grasp):
+
+        # 1. Filter out bottom approaching direction
+        dir_orig = grasp[self.graspindices['igraspdir']]
+        grasp[self.graspindices['igraspdir']] = dir_orig
+        self.show_grasp(grasp)
+
+        if dir_orig[1] >= 0: # upward
+            return False
+
+        # 2. Filter out contacts points at the bottom of the object
+        contacts, finalconfig, mindist, volume = self.gmodel.testGrasp(
+            grasp=grasp, translate=True, forceclosure=False)
+        obj_position = self.gmodel.target.GetTransform()[0:3, 3]
+        if len(contacts) == 0:
+            return -1
+        for c in contacts:
+            pos = c[0:3] - obj_position
+            if abs(pos[1]) < 0.001:
+                return False
+
+        return True
+
     # order the grasps - call eval grasp on each, set the 'performance' index,
     # and sort
     def order_grasps(self):
-        # you should change the order of self.grasps_ordered
-        self.grasps_ordered = self.grasps.copy()
+        self.grasps_ordered = []
+
+        for grasp in self.grasps:
+            if self.filter_grasp(grasp):
+                self.grasps_ordered.append(grasp)
 
         for grasp in self.grasps_ordered:
             grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp)
@@ -244,7 +270,7 @@ class RoboHandler:
     def show_grasp(self, grasp, delay=5):
         with openravepy.RobotStateSaver(self.gmodel.robot):
             with self.gmodel.GripperVisibility(self.gmodel.manip):
-                time.sleep(0.1)  # let viewer update?
+                # time.sleep(0.1)  # let viewer update?
                 try:
                     with self.env:
                         contacts, finalconfig, mindist, volume = self.gmodel.testGrasp(
