@@ -74,6 +74,10 @@ class RoboHandler:
         # self.robot.SetActiveDOFs(left_manip.GetArmIndices())
         # self.robot.SetActiveDOFValues(left_relaxed)
 
+
+        self.robot_left.SetActiveManipulator('left_wam')
+        self.robot_right.SetActiveManipulator('right_wam')
+
         # self.manip = self.robot.GetActiveManipulator()
         # self.end_effector = self.manip.GetEndEffector()
 
@@ -85,11 +89,7 @@ class RoboHandler:
 
         # change the location so it's not under the robot
         T = self.target_kinbody.GetTransform()
-        T[1,2] = -1
-        T[2,2] = 0
-        T[2,1] = 1
-        T[1,1] = 0
-        T[0:3, 3] += np.array([0.35, 0, 0.5])
+        T[0:3, 3] += np.array([0.5, 0.5, 0.5])
         self.target_kinbody.SetTransform(T)
         self.env.AddKinBody(self.target_kinbody)
 
@@ -138,40 +138,67 @@ class RoboHandler:
 
         return True
 
-    # def check_collision(self, grasp1, grasp2):
-    #     self.robot.SetActiveManipulator(self.manip)
-    #     self.robot.SetTransform(np.eye(4))  # have to reset transform in order to remove randomness
-    #     self.robot.SetDOFValues(grasp1[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
-    #     self.robot.SetActiveDOFs(self.manip.GetGripperIndices(),
-    #                              self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
-    #     self.env.UpdatePublishedBodies()
-    #     time.sleep(1)
-    #     #
-    #     # self.robot.SetTransform(np.eye(4))  # have to reset transform in order to remove randomness
-    #     # self.robot.SetDOFValues(grasp1[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
-    #     # # self.robot.SetActiveDOFs(self.manip.GetGripperIndices(),
-    #     # #                          self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
+    def check_collision(self, grasp_left, grasp_right):
+        with openravepy.RobotStateSaver(self.gmodel_left.robot):
+            with openravepy.RobotStateSaver(self.gmodel_right.robot):
+                with self.env:
+                    contacts_left, finalconfig_left, mindist_left, volume_left = self.gmodel_left.testGrasp(
+                        grasp=grasp_left, translate=True, forceclosure=True)
+
+                    contacts_right, finalconfig_right, mindist_right, volume_right = self.gmodel_right.testGrasp(
+                        grasp=grasp_right, translate=True, forceclosure=True)
+
+                    self.gmodel_left.robot.GetController().Reset(0)
+                    self.gmodel_left.robot.SetDOFValues(finalconfig_left[0])
+                    self.gmodel_left.robot.SetTransform(finalconfig_left[1])
+                    self.gmodel_right.robot.GetController().Reset(0)
+                    self.gmodel_right.robot.SetDOFValues(finalconfig_right[0])
+                    self.gmodel_right.robot.SetTransform(finalconfig_right[1])
+
+
+                    self.env.UpdatePublishedBodies()
+
+                    return self.env.CheckCollision(self.robot_left, self.robot_right)
+
+        # self.robot.SetTransform(np.eye(4))  # have to reset transform in order to remove randomness
+        # self.robot.SetDOFValues(grasp1[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
+        # # self.robot.SetActiveDOFs(self.manip.GetGripperIndices(),
+        # #                          self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
 
     # order the grasps - call eval grasp on each, set the 'performance' index,
     # and sort
     def order_grasps(self):
-        self.grasps_filtered_left = []
-        self.grasps_filtered_right = []
-
 
         # 1. filter out single grasp
-        for grasp in self.grasps_left:
-            if self.filter_grasp(grasp, indices=self.graspindices_left, gmodel=self.gmodel_left):
-                self.grasps_filtered_left.append(grasp)
+        # self.grasps_filtered_left = []
+        # self.grasps_filtered_right = []
+        # for grasp in self.grasps_left:
+        #     if self.filter_grasp(grasp, indices=self.graspindices_left, gmodel=self.gmodel_left):
+        #         self.grasps_filtered_left.append(grasp)
+        #
+        # for grasp in self.grasps_right:
+        #     if self.filter_grasp(grasp, indices=self.graspindices_right, gmodel=self.gmodel_right):
+        #         self.grasps_filtered_right.append(grasp)
 
-        for grasp in self.grasps_right:
-            if self.filter_grasp(grasp, indices=self.graspindices_right, gmodel=self.gmodel_right):
-                self.grasps_filtered_right.append(grasp)
+        self.grasps_filtered_left = self.grasps_left
+        self.grasps_filtered_right = self.grasps_right
 
+        # 2. Construct double grasps pairs
         self.double_grasps = []
 
-        # 2. check double grasp collision
+        for grasp_left in self.grasps_filtered_left:
+            for grasp_right in self.grasps_filtered_right:
+                grasp_pair = [grasp_left, grasp_right]
+                self.double_grasps.append(grasp_pair)
 
+        from random import shuffle
+        shuffle(self.double_grasps)
+
+        # 3. check double grasp collision
+        self.double_filtered_grasps = []
+        for grasp_pair in self.double_grasps:
+            if not self.check_collision(grasp_left=grasp_pair[0], grasp_right=grasp_pair[1]):
+                self.double_filtered_grasps.append(grasp_pair)
 
         # for grasp in self.grasps_ordered:
         #     grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp)
