@@ -48,8 +48,6 @@ class RoboHandler:
         # order grasps based on your own scoring metric
         self.order_grasps()
 
-
-
         # order grasps with noise
         # self.order_grasps_noisy()
 
@@ -62,6 +60,19 @@ class RoboHandler:
         # time.sleep(3) # wait for viewer to initialize. May be helpful to
         # uncomment
         self.robot = self.env.GetRobots()[0]
+
+
+        right_relaxed = [5.65, -1.76, -0.26, 1.96, -1.15, 0.87, -1.43]
+        left_relaxed = [0.64, -1.76, 0.26, 1.96, 1.16, 0.87, 1.43]
+
+        self.right_manip = self.robot.GetManipulator('right_wam')
+        # self.robot.SetActiveDOFs(right_manip.GetArmIndices())
+        # self.robot.SetActiveDOFValues(right_relaxed)
+
+        self.left_manip = self.robot.GetManipulator('left_wam')
+        # self.robot.SetActiveDOFs(left_manip.GetArmIndices())
+        # self.robot.SetActiveDOFValues(left_relaxed)
+
         self.manip = self.robot.GetActiveManipulator()
         self.end_effector = self.manip.GetEndEffector()
 
@@ -73,7 +84,11 @@ class RoboHandler:
 
         # change the location so it's not under the robot
         T = self.target_kinbody.GetTransform()
-        T[0:3, 3] += np.array([0.5, 0.5, 0.5])
+        T[1,2] = -1
+        T[2,2] = 0
+        T[2,1] = 1
+        T[1,1] = 0
+        T[0:3, 3] += np.array([0.35, 0, 0.5])
         self.target_kinbody.SetTransform(T)
         self.env.AddKinBody(self.target_kinbody)
 
@@ -94,7 +109,9 @@ class RoboHandler:
         # 1. Filter out bottom approaching direction
         dir_orig = grasp[self.graspindices['igraspdir']]
         grasp[self.graspindices['igraspdir']] = dir_orig
-        self.show_grasp(grasp)
+        # self.show_grasp(grasp)
+        self.gmodel.showgrasp(grasp, showfinal=True)
+
 
         if dir_orig[1] >= 0: # upward
             return False
@@ -112,12 +129,27 @@ class RoboHandler:
 
         return True
 
+    def check_collision(self, grasp1, grasp2):
+        self.robot.SetActiveManipulator(self.manip)
+        self.robot.SetTransform(np.eye(4))  # have to reset transform in order to remove randomness
+        self.robot.SetDOFValues(grasp1[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
+        self.robot.SetActiveDOFs(self.manip.GetGripperIndices(),
+                                 self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
+        self.env.UpdatePublishedBodies()
+        time.sleep(1)
+        #
+        # self.robot.SetTransform(np.eye(4))  # have to reset transform in order to remove randomness
+        # self.robot.SetDOFValues(grasp1[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
+        # # self.robot.SetActiveDOFs(self.manip.GetGripperIndices(),
+        # #                          self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
+
     # order the grasps - call eval grasp on each, set the 'performance' index,
     # and sort
     def order_grasps(self):
         self.grasps_ordered = []
 
         for grasp in self.grasps:
+            self.check_collision(grasp, grasp)
             if self.filter_grasp(grasp):
                 self.grasps_ordered.append(grasp)
 
@@ -213,23 +245,24 @@ class RoboHandler:
 
             # heres an interface in case you want to manipulate things more specifically
             # NOTE for this assignment, your solutions cannot make use of graspingnoise
-#      self.robot.SetTransform(np.eye(4)) # have to reset transform in order to remove randomness
-#      self.robot.SetDOFValues(grasp[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
-#      self.robot.SetActiveDOFs(self.manip.GetGripperIndices(), self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
-#      self.gmodel.grasper = openravepy.interfaces.Grasper(self.robot, friction=self.gmodel.grasper.friction, avoidlinks=[], plannername=None)
-#      contacts, finalconfig, mindist, volume = self.gmodel.grasper.Grasp( \
-#            direction             = grasp[self.graspindices.get('igraspdir')], \
-#            roll                  = grasp[self.graspindices.get('igrasproll')], \
-#            position              = grasp[self.graspindices.get('igrasppos')], \
-#            standoff              = grasp[self.graspindices.get('igraspstandoff')], \
-#            manipulatordirection  = grasp[self.graspindices.get('imanipulatordirection')], \
-#            target                = self.target_kinbody, \
-#            graspingnoise         = 0.0, \
-#            forceclosure          = True, \
-#            execute               = False, \
-#            outputfinal           = True, \
-#            translationstepmult   = None, \
-#            finestep              = None )
+
+            # self.robot.SetTransform(np.eye(4)) # have to reset transform in order to remove randomness
+            # self.robot.SetDOFValues(grasp[self.graspindices.get('igrasppreshape')], self.manip.GetGripperIndices())
+            # self.robot.SetActiveDOFs(self.manip.GetGripperIndices(), self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
+            # self.gmodel.grasper = openravepy.interfaces.Grasper(self.robot, friction=self.gmodel.grasper.friction, avoidlinks=[], plannername=None)
+            # contacts, finalconfig, mindist, volume = self.gmodel.grasper.Grasp( \
+            #    direction             = grasp[self.graspindices.get('igraspdir')], \
+            #    roll                  = grasp[self.graspindices.get('igrasproll')], \
+            #    position              = grasp[self.graspindices.get('igrasppos')], \
+            #    standoff              = grasp[self.graspindices.get('igraspstandoff')], \
+            #    manipulatordirection  = grasp[self.graspindices.get('imanipulatordirection')], \
+            #    target                = self.target_kinbody, \
+            #    graspingnoise         = 0.0, \
+            #    forceclosure          = True, \
+            #    execute               = False, \
+            #    outputfinal           = True, \
+            #    translationstepmult   = None, \
+            #    finestep              = None )
 
     # given grasp_in, create a new grasp which is altered randomly
     # you can see the current position and direction of the grasp by:
@@ -267,7 +300,7 @@ class RoboHandler:
         print(performance)
 
     # displays the grasp
-    def show_grasp(self, grasp, delay=5):
+    def show_grasp(self, grasp, delay=0.5):
         with openravepy.RobotStateSaver(self.gmodel.robot):
             with self.gmodel.GripperVisibility(self.gmodel.manip):
                 # time.sleep(0.1)  # let viewer update?
