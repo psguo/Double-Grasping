@@ -60,13 +60,13 @@ class RoboHandler:
         # time.sleep(3) # wait for viewer to initialize. May be helpful to
         # uncomment
         self.robot_left = self.env.GetRobots()[0]
-        self.robot_right = self.env.GetRobots()[1]
+        # self.robot_right = self.env.GetRobots()[1]
 
 
         right_relaxed = [5.65, -1.76, -0.26, 1.96, -1.15, 0.87, -1.43]
         left_relaxed = [0.64, -1.76, 0.26, 1.96, 1.16, 0.87, 1.43]
 
-        self.right_manip = self.robot_right.GetManipulator('right_wam')
+        # self.right_manip = self.robot_right.GetManipulator('right_wam')
         # self.robot.SetActiveDOFs(right_manip.GetArmIndices())
         # self.robot.SetActiveDOFValues(right_relaxed)
 
@@ -97,21 +97,21 @@ class RoboHandler:
         self.gmodel_left = openravepy.databases.grasping.GraspingModel(
             self.robot_left, self.target_kinbody)
 
-        self.gmodel_right = openravepy.databases.grasping.GraspingModel(
-            self.robot_right, self.target_kinbody)
+        # self.gmodel_right = openravepy.databases.grasping.GraspingModel(
+        #     self.robot_right, self.target_kinbody)
         # if you want to set options, e.g.  friction
         options = openravepy.options
         options.friction = 0.1
         if not self.gmodel_left.load():
             self.gmodel_left.autogenerate(options)
-        if not self.gmodel_right.load():
-            self.gmodel_right.autogenerate(options)
+        # if not self.gmodel_right.load():
+        #     self.gmodel_right.autogenerate(options)
 
         self.graspindices_left = self.gmodel_left.graspindices
         self.grasps_left = self.gmodel_left.grasps
 
-        self.graspindices_right = self.gmodel_right.graspindices
-        self.grasps_right = self.gmodel_right.grasps
+        # self.graspindices_right = self.gmodel_right.graspindices
+        # self.grasps_right = self.gmodel_right.grasps
 
     def filter_grasp(self, grasp, indices, gmodel):
 
