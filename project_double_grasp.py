@@ -79,7 +79,10 @@ class RoboHandler:
 
     # problem specific initialization - load target and grasp module
     def problem_init(self):
-        self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
+        self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/domino.kinbody.xml')
+        # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/wood_block.kinbody.xml')
+        # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/cheezit.kinbody.xml')
+        # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/winegoblet.iv')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/black_plastic_mug.iv')
 

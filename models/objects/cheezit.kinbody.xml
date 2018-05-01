@@ -1,0 +1,9 @@
+<KinBody name="cheezit_1inx1in">
+  <Body type="static" name="cheezit_1inx1in">
+    <Geom type="box">
+      <Translation>0 0 0</Translation>
+      <Extents>0.060 0.160 0.210</Extents>
+      <DiffuseColor>0 0 1.0</DiffuseColor>
+    </Geom>
+  </Body>
+</KinBody>
