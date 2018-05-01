@@ -15,7 +15,7 @@ from numpy import linalg as LA
 
 
 np.random.seed(0)
-PACKAGE_NAME = 'hw1'
+PACKAGE_NAME = 'double'
 
 curr_path = os.getcwd()
 relative_ordata = '/models'
@@ -66,17 +66,17 @@ class RoboHandler:
         right_relaxed = [5.65, -1.76, -0.26, 1.96, -1.15, 0.87, -1.43]
         left_relaxed = [0.64, -1.76, 0.26, 1.96, 1.16, 0.87, 1.43]
 
-        self.right_manip = self.robot_right.GetManipulator('right_wam')
+        self.right_manip = self.robot_right.GetManipulator('rightarm')
         # self.robot.SetActiveDOFs(right_manip.GetArmIndices())
         # self.robot.SetActiveDOFValues(right_relaxed)
 
-        self.left_manip = self.robot_left.GetManipulator('left_wam')
+        self.left_manip = self.robot_left.GetManipulator('leftarm')
         # self.robot.SetActiveDOFs(left_manip.GetArmIndices())
         # self.robot.SetActiveDOFValues(left_relaxed)
 
 
-        self.robot_left.SetActiveManipulator('left_wam')
-        self.robot_right.SetActiveManipulator('right_wam')
+        self.robot_right.SetActiveManipulator('rightarm')
+        self.robot_left.SetActiveManipulator('leftarm')
 
         # self.manip = self.robot.GetActiveManipulator()
         # self.end_effector = self.manip.GetEndEffector()
