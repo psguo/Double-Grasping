@@ -62,7 +62,7 @@ class RoboHandler:
         # time.sleep(3) # wait for viewer to initialize. May be helpful to
         # uncomment
         self.robot_left = self.env.GetRobots()[0]
-        # self.robot_right = self.env.GetRobots()[1]
+        self.robot_right = self.env.GetRobots()[1]
 
 
         right_relaxed = [5.65, -1.76, -0.26, 1.96, -1.15, 0.87, -1.43]
@@ -86,9 +86,9 @@ class RoboHandler:
 
     # problem specific initialization - load target and grasp module
     def problem_init(self):
-        self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/domino.kinbody.xml')
+        # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/domino.kinbody.xml')
         # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/wood_block.kinbody.xml')
-        # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/cheezit.kinbody.xml')
+        self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/cheezit.kinbody.xml')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/winegoblet.iv')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/black_plastic_mug.iv')
