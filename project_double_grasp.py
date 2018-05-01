@@ -43,10 +43,12 @@ openravepy.misc.InitOpenRAVELogging()
 
 class RoboHandler:
     def __init__(self):
+        self.is_test = True
         self.openrave_init()
         self.problem_init()
         # order grasps based on your own scoring metric
         self.order_grasps()
+
 
         # order grasps with noise
         # self.order_grasps_noisy()
@@ -119,22 +121,22 @@ class RoboHandler:
         dir_orig = grasp[indices['igraspdir']]
         grasp[indices['igraspdir']] = dir_orig
         # self.show_grasp(grasp)
-        gmodel.showgrasp(grasp, showfinal=True)
-
 
         if dir_orig[1] >= 0: # upward
             return False
 
-        # 2. Filter out contacts points at the bottom of the object
-        contacts, finalconfig, mindist, volume = gmodel.testGrasp(
-            grasp=grasp, translate=True, forceclosure=False)
-        obj_position = gmodel.target.GetTransform()[0:3, 3]
-        if len(contacts) == 0:
-            return -1
-        for c in contacts:
-            pos = c[0:3] - obj_position
-            if abs(pos[1]) < 0.001:
-                return False
+        gmodel.showgrasp(grasp, showfinal=True, delay=0.5)
+
+        # # 2. Filter out contacts points at the bottom of the object
+        # contacts, finalconfig, mindist, volume = gmodel.testGrasp(
+        #     grasp=grasp, translate=True, forceclosure=False)
+        # obj_position = gmodel.target.GetTransform()[0:3, 3]
+        # if len(contacts) == 0:
+        #     return -1
+        # for c in contacts:
+        #     pos = c[0:3] - obj_position
+        #     if abs(pos[1]) < 0.001:
+        #         return False
 
         return True
 
@@ -165,40 +167,65 @@ class RoboHandler:
         # # self.robot.SetActiveDOFs(self.manip.GetGripperIndices(),
         # #                          self.robot.DOFAffine.X + self.robot.DOFAffine.Y + self.robot.DOFAffine.Z)
 
-    # order the grasps - call eval grasp on each, set the 'performance' index,
+    def get_grasp_relative_pose(self, grasp, graspindices):
+        direction=grasp[graspindices.get('igraspdir')]
+        roll=grasp[graspindices.get('igrasproll')]
+        position=grasp[graspindices.get('igrasppos')]
+        standoff=grasp[graspindices.get('igraspstandoff')]
+        manipulatordirection=grasp[graspindices.get('imanipulatordirection')]
+
+        pose = [position, direction]
+
+        # order the grasps - call eval grasp on each, set the 'performance' index,
     # and sort
     def order_grasps(self):
 
         # 1. filter out single grasp
-        # self.grasps_filtered_left = []
-        # self.grasps_filtered_right = []
-        # for grasp in self.grasps_left:
-        #     if self.filter_grasp(grasp, indices=self.graspindices_left, gmodel=self.gmodel_left):
-        #         self.grasps_filtered_left.append(grasp)
-        #
-        # for grasp in self.grasps_right:
-        #     if self.filter_grasp(grasp, indices=self.graspindices_right, gmodel=self.gmodel_right):
-        #         self.grasps_filtered_right.append(grasp)
+        if self.is_test:
+            index_left = 34
+            index_right = 50
 
-        self.grasps_filtered_left = self.grasps_left
-        self.grasps_filtered_right = self.grasps_right
+            grasp_left = self.grasps_left[index_left]
+            grasp_right = self.grasps_right[index_right]
 
-        # 2. Construct double grasps pairs
-        self.double_grasps = []
+            grasp_left_relative_pose = self.get_grasp_relative_pose(grasp_left, self.graspindices_left)
+            grasp_right_relative_pose = self.get_grasp_relative_pose(grasp_right, self.graspindices_right)
 
-        for grasp_left in self.grasps_filtered_left:
-            for grasp_right in self.grasps_filtered_right:
-                grasp_pair = [grasp_left, grasp_right]
-                self.double_grasps.append(grasp_pair)
+            # Tgrasp_left = self.gmodel_left.getGlobalGraspTransform(grasp_left, collisionfree=True)
+            # contacts, finalconfig, mindist, volume = self.gmodel_left.testGrasp(grasp=grasp_left, translate=True,
+                                                                                # forceclosure=False)
+            # self.robot.SetDOFValues(grasp_left[self.graspindices['igrasppreshape']], self.manip.GetGripperIndices())
+        else:
+            self.grasps_filtered_left = []
+            self.grasps_filtered_right = []
+            for grasp in self.grasps_left:
+                if self.filter_grasp(grasp, indices=self.graspindices_left, gmodel=self.gmodel_left):
+                    self.grasps_filtered_left.append(grasp)
 
-        from random import shuffle
-        shuffle(self.double_grasps)
 
-        # 3. check double grasp collision
-        self.double_filtered_grasps = []
-        for grasp_pair in self.double_grasps:
-            if not self.check_collision(grasp_left=grasp_pair[0], grasp_right=grasp_pair[1]):
-                self.double_filtered_grasps.append(grasp_pair)
+            for grasp in self.grasps_right:
+                if self.filter_grasp(grasp, indices=self.graspindices_right, gmodel=self.gmodel_right):
+                    self.grasps_filtered_right.append(grasp)
+
+            self.grasps_filtered_left = self.grasps_left
+            self.grasps_filtered_right = self.grasps_right
+
+            # 2. Construct double grasps pairs
+            self.double_grasps = []
+
+            for grasp_left in self.grasps_filtered_left:
+                for grasp_right in self.grasps_filtered_right:
+                    grasp_pair = [grasp_left, grasp_right]
+                    self.double_grasps.append(grasp_pair)
+
+            from random import shuffle
+            shuffle(self.double_grasps)
+
+            # 3. check double grasp collision
+            self.double_filtered_grasps = []
+            for grasp_pair in self.double_grasps:
+                if not self.check_collision(grasp_left=grasp_pair[0], grasp_right=grasp_pair[1]):
+                    self.double_filtered_grasps.append(grasp_pair)
 
         # for grasp in self.grasps_ordered:
         #     grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp)
