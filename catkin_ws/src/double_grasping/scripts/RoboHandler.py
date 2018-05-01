@@ -18,7 +18,7 @@ from pyquaternion import Quaternion
 np.random.seed(0)
 PACKAGE_NAME = 'double'
 
-curr_path = os.getcwd()
+curr_path = os.getcwd() + '/src/double_grasping/scripts'
 relative_ordata = '/models'
 ordata_path_thispack = curr_path + relative_ordata
 
@@ -48,7 +48,7 @@ class RoboHandler:
         self.openrave_init()
         self.problem_init()
         # order grasps based on your own scoring metric
-        self.order_grasps()
+        
 
         self.is_test = True
 
@@ -60,7 +60,8 @@ class RoboHandler:
         self.env = openravepy.Environment()
         self.env.SetViewer('qtcoin')
         self.env.GetViewer().SetName('HW1 Viewer')
-        self.env.Load('models/%s.env.xml' % PACKAGE_NAME)
+        self.env.Load(curr_path + '/models/%s.env.xml' % PACKAGE_NAME)
+
         # time.sleep(3) # wait for viewer to initialize. May be helpful to
         # uncomment
         self.robot_left = self.env.GetRobots()[0]
@@ -289,12 +290,14 @@ class RoboHandler:
             grasp_left = self.grasps_left[index_left]
             grasp_right = self.grasps_right[index_right]
 
-            grasp_left[self.graspindices_left.get('igrasppos')] = np.array([0,0,0])
+            # grasp_left[self.graspindices_left.get('igrasppos')] = np.array([0,0,0])
 
             # self.gmodel_left.showgrasp(grasp_left, showfinal=True)
 
             grasp_left_relative_pose = self.get_grasp_relative_pose(grasp_left, self.gmodel_left, self.graspindices_left)
             grasp_right_relative_pose = self.get_grasp_relative_pose(grasp_right, self.gmodel_right, self.graspindices_right)
+
+            return {'grasp_left_relative_pose':grasp_left_relative_pose, 'grasp_right_relative_pose':grasp_right_relative_pose}
 
             # Tgrasp_left = self.gmodel_left.getGlobalGraspTransform(grasp_left, collisionfree=True)
             # contacts, finalconfig, mindist, volume = self.gmodel_left.testGrasp(grasp=grasp_left, translate=True,
