@@ -2,8 +2,12 @@
   <Body type="static" name="cheezit_1inx1in">
     <Geom type="box">
       <Translation>0 0 0</Translation>
-      <Extents>0.060 0.160 0.210</Extents>
+      <!-- <Extents>0.03 0.08 0.105</Extents> -->
+      <Extents>0.02 0.08 0.105</Extents>
       <DiffuseColor>0 0 1.0</DiffuseColor>
     </Geom>
+    <Mass type="mimicgeom">
+		<density>1</density>
+    </Mass>
   </Body>
 </KinBody>

@@ -2,7 +2,7 @@
   <Body type="static" name="wood_block_1inx1in">
     <Geom type="box">
       <Translation>0 0 0</Translation>
-      <Extents>0.0537 0.0561 0.280</Extents>
+      <Extents>0.0268 0.028 0.140</Extents>
       <DiffuseColor>0 0 1.0</DiffuseColor>
     </Geom>
   </Body>

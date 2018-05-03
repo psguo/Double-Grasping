@@ -46,14 +46,16 @@ class RoboHandler:
     def __init__(self):
         self.is_test = True
         self.openrave_init()
-        self.problem_init()
-        # order grasps based on your own scoring metric
         
-
+        # order grasps based on your own scoring metric
         self.is_test = True
 
         # order grasps with noise
         # self.order_grasps_noisy()
+
+    def set_object(self, object):
+        self.problem_init(object)
+        self.object = object
 
     # the usual initialization for openrave
     def openrave_init(self):
@@ -88,11 +90,15 @@ class RoboHandler:
         # self.end_effector = self.manip.GetEndEffector()
 
     # problem specific initialization - load target and grasp module
-    def problem_init(self):
-        # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/domino.kinbody.xml')
+    def problem_init(self, init_object='wood_block'):
+        AVAILABLE_OBJECTS = ['wood_block_1inx1in', 'cheezit_1inx1in', 'domino_1inx1in']
+        for available in AVAILABLE_OBJECTS:
+            if self.env.GetKinBody(available):
+                self.env.RemoveKinBody(self.env.GetKinBody(available))
+        self.target_kinbody = self.env.ReadKinBodyXMLFile(curr_path + '/models/objects/' + init_object + '.kinbody.xml')
         # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/wood_block.kinbody.xml')
         # self.target_kinbody = self.env.ReadKinBodyXMLFile('models/objects/cheezit.kinbody.xml')
-        self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
+        # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/winegoblet.iv')
         # self.target_kinbody = self.env.ReadKinBodyURI('models/objects/black_plastic_mug.iv')
 
@@ -121,6 +127,10 @@ class RoboHandler:
 
         self.graspindices_right = self.gmodel_right.graspindices
         self.grasps_right = self.gmodel_right.grasps
+
+
+        # self.graspindices_right = self.gmodel_left.graspindices
+        # self.grasps_right = self.gmodel_left.grasps
 
     def filter_grasp(self, grasp, indices, gmodel):
 
@@ -284,8 +294,19 @@ class RoboHandler:
 
         # 1. filter out single grasp
         if self.is_test:
-            index_left = 34
-            index_right = 50
+            import IPython
+            IPython.embed()
+            index_left = 0
+            index_right = 0
+            if self.object == "wood_block":
+                index_left = 47
+                index_right = 66
+            elif self.object == "cheezit":
+                index_left = 0
+                index_right = 3
+            elif self.object == "domino":
+                index_left = 17
+                index_right = 28 # 27 other direction
 
             grasp_left = self.grasps_left[index_left]
             grasp_right = self.grasps_right[index_right]

@@ -2,7 +2,7 @@
   <Body type="static" name="domino_1inx1in">
     <Geom type="box">
       <Translation>0 0 0</Translation>
-      <Extents>0.0425 0.090 0.175</Extents>
+      <Extents>0.02125 0.045 0.0875</Extents>
       <DiffuseColor>0 0 1.0</DiffuseColor>
     </Geom>
   </Body>
